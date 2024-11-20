@@ -1,3 +1,4 @@
+import json
 import stripe
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Cart, CartItem, Product, Message, Review, Receipt, Wishlist, FollowProduct
@@ -5,7 +6,9 @@ from django.http import JsonResponse
 from django.conf import settings
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .utils import initiate_mpesa_payment
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt
+from .forms import PaymentForm
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -91,33 +94,39 @@ def dashboard(request):
         'wishlist': wishlist
     })
 
-def process_stripe_payment(request):
-    if request.method == 'POST':
+@csrf_exempt
+@login_required
+def process_payment(request):
+    if request.method == "POST":
         try:
-            data = request.POST
+            data = json.loads(request.body)
+            amount = data.get("amount")
+            token = data.get("token")
+
+            if not amount or not token:
+                return JsonResponse({"error": "Invalid input."}, status=400)
+
+            amount_in_cents = int(float(amount) * 100)
+
             charge = stripe.Charge.create(
-                amount=int(data['amount']) * 100,
+                amount=amount_in_cents,
                 currency="usd",
-                source=data['stripeToken'],
-                description="Payment for Order12345",
+                source=token,
+                description=f"Payment by {request.user.username}",
             )
-            return JsonResponse({'status': 'success', 'charge': charge})
-        except stripe.error.StripeError as e:
-            return JsonResponse({'status': 'error', 'message': str(e)})
 
-class MpesaPaymentAPIView(APIView):
-    def post(self, request):
-        phone_number = request.data.get('phone_number')
-        amount = request.data.get('amount')
-        response = initiate_mpesa_payment(phone_number, amount)
-        return Response(response)
+            payment = Payment.objects.create(
+                user=request.user,
+                amount=amount,
+                stripe_charge_id=charge.id,
+            )
+            payment.save()
 
-class StripePaymentAPIView(APIView):
-    def post(self, request):
-        return process_stripe_payment(request)
+            return JsonResponse({"message": "Payment processed successfully."})
 
-def mpesa_callback(request):
-    return JsonResponse({'message': 'Mpesa callback received'})
-
-def stripe_webhook(request):
-    return JsonResponse({'message': 'Stripe webhook received'})
+        except stripe.error.CardError as e:
+            return JsonResponse({"error": f"Payment failed: {e.error.message}"}, status=400)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+    else:
+        return JsonResponse({"error": "Invalid request method."}, status=405)

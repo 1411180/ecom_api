@@ -18,5 +18,6 @@
     "files.trimTrailingWhitespace": true,
     "files.insertFinalNewline": true,
     "python.analysis.completeFunctionParens": true,
-    "errorLens.messageEnabled": false
+    "errorLens.messageEnabled": false,
+    "githubIssues.issueBranchTitle": "feature/${issueNumber}_${sanitizedIssueTitle}"
 }

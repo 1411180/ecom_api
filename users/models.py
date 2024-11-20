@@ -10,7 +10,7 @@ class Cart(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="Cart")
     product = models.ForeignKey("Product", on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(default=1)
-    added_at = models.DateTimeField(auto_now_add=True)
+
 
 class CartItem(models.Model):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE)
@@ -54,12 +54,13 @@ class FollowProduct(models.Model):
     followed_at = models.DateTimeField(auto_now_add=True)
 
 class Payment(models.Model):
-    user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="payments")
+    card_number = models.CharField(max_length=16)  # Mask this in production!
+    cardholder_name = models.CharField(max_length=255)
+    expiry_date = models.DateField()
+    cvv = models.CharField(max_length=3)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
-    method = models.CharField(max_length=50, choices=[('Mpesa', 'Mpesa'), ('Debit Card', 'Debit Card')])
-    transaction_id = models.CharField(max_length=100, unique=True)
-    status = models.CharField(max_length=20, choices=[('Pending', 'Pending'), ('Completed', 'Completed'), ('Failed', 'Failed')])
-    timestamp = models.DateTimeField(auto_now_add=True)
+    payment_date = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.user.username} - {self.method} - {self.status}"
+        return f"Payment by {self.user.username} on {self.payment_date}"
