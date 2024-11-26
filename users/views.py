@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
-from .forms import PaymentForm
+from .forms import PaymentForm, ProductForm
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
