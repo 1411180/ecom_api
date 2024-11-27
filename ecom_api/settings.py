@@ -9,6 +9,8 @@ https://docs.djangoproject.com/en/4.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
+
+from dotenv import load_dotenv
 import os
 from pathlib import Path
 
@@ -151,6 +153,11 @@ MPESA_CONSUMER_SECRET = os.getenv('MPESA_CONSUMER_SECRET')
 
 STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
 STRIPE_PUBLIC_KEY = os.getenv('STRIPE_PUBLIC_KEY')
+
+load_dotenv()
+
+GOOGLE_CLIENT_ID = os.getenv('1030481922069-sddjutsjnvpsbopmnnhios6bh3khpp8q.apps.googleusercontent.com')
+GOOGLE_CLIENT_SECRET = ('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')
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
